@@ -1,4 +1,4 @@
-# Blobservation1g
+# Blobservation
 
 Graphical representation of the Code Wars challenge Blobservation1.
 
