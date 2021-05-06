@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Blobservation</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+    <div id = controls>
+    <h1>Blobservation</h1>
+    <p>Concept by docgunthrop, Programed by Arthur Allen.</p>
+
+      <p>A challenge from <a href="https://www.codewars.com/kata/5abab55b20746bc32e000008" target= "_blank">Codewars</a></p>
+      <div id = "upper">
+      <p>A cellular automation not unlike Conway's Life.  Blobs of various sizes are placed around a room.  Each blob will take a step towards the nearest smaller blob and will engulf it when it occupies the same cell.  The smallest size blob(s) can't move.  When multiple valid blobs of equal size and distance are away from the predatory blob, blob is supposed to give priority to the first angle from 12:00 and then moving in a clockwise direction, but in practice the opposite is true.</p>
+      
+      <p>This is a tricky and opaque challenge, and I needed to write this animated version to debug and see where I went wrong.
+    </p>
+    </div>
+    <hr>
+    <label for="height">Height</label>
+
+    <input type="number" id="height" name="height">
+    <br>
+    <label for="width">Width</label>
+
+    <input type="number" id="width" name="width">
+    <br>
+    <p>Scale:</p>
+
+<div>
+  <input type="range" id="scale" name="scale"
+         min="15" max="100" value = "15">
+  <label for="scale"></label>
+</div>
+    <br>
+    <label for="mode"></label>
+    <select id="mode">
+      <option>Pattern</option>
+      <option>Build</option>
+      <option>Random</option>
+    </select>
+    <br> 
+    <div>
+      <input type="checkbox" id="diagonals" name="diagonals"
+              checked = "true" title = "Used for compatibility with original Blobservation specs, ones which were not made clear in the rules but were needed to actually pass the tests.  See lines 452 through 454 of code.  Clockwise sort of tie angle choice when unchecked, counterclockwise when checked.">
+      <label for="diagonals" title = "Used for compatibility with original Blobservation specs, ones which were not made clear in the rules but were needed to actually pass the tests.  See lines 452 through 454 of code.  Clockwise sort of tie angle choice when unchecked, counterclockwise when checked.">Angle sort refactor</label>
+      <br>
+      <input type="checkbox" id="reverse"         name="reverse"
+              title = "Blobs will go after higher value instead of lower value">
+      <label for="reverse" title = "Blobs will go after higher value instead of lower value">Reverse rules</label>
+    </div>
+    <div id = "densityDiv" hidden = false>
+      <p>Density:</p>
+      <input type="range" id="density" name="density"
+             min="1" max="10">
+      <label for="density"></label>
+      </div>
+    <div id = "patternHide">
+    <form id = "patternDiv" name = "patternDiv">
+      <p>Patterns:</p>
+      <input type = "radio" id = "patternChoice1" name = "pattern" value = "checker" checked>
+      <label for="patternChoice1">Checker</label>
+      <input type = "radio" id = "patternChoice2" name = "pattern" value = "horizontal">
+      <label for="patternChoice2">Horizontal</label>
+      <input type = "radio" id = "patternChoice3" name = "pattern" value = "vertical">
+      <label for="patternChoice3">Vertical</label>
+      <input type = "radio" id = "patternChoice4" name = "pattern" value = "center">
+      <label for="patternChoice4">One at center</label>
+    </form>
+    </div>
+    <div id="display">
+    <p id = "lowestHighest">Lowest Number</p>
+    <p>Generation</p>
+    <p id = "lowest"></p>
+    <p id = "generation"></p>
+
+    </div>
+
+    <p>Speed:</p>
+
+<div>
+  <input type="range" id="speed" name="speed"
+         min="0" max="500">
+  <label for="speed"></label>
+</div>
+<br>
+<button id = "runMode"
+        type="button"
+        value = "Run">
+    <span>Run</span>
+</button>
+<button id = "step"
+        type = "button"
+        value = "Step">
+      <span>Step</span>
+    </button>
+</div>
+
+
+    
+    <p><canvas id="canvas" width="1400" height="601"></canvas></p>
+    <script type="application/javascript" src="Blobservation1g.js"></script>
+  </body>
+</html>
