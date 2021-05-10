@@ -189,6 +189,17 @@ reverseCheckbox.addEventListener('change', () => {
   }
 });
 
+var smoothAnimation = document.getElementById("smooth")
+
+var smooth = true;
+
+smoothAnimation.addEventListener('change', () =>{
+  if (smoothAnimation.checked)
+    smooth = true;
+  else
+    smooth = false;
+});
+
 var speed = 250;
 var speedRange = document.getElementById("speed");
 
@@ -229,8 +240,10 @@ var stepButton = document.getElementById('step');
 
 stepButton.addEventListener('click', ()=>{
   move();
-  //animate();
-  redraw();
+  if (smooth)
+    animate();
+  else
+    redraw();
   generation++;
   generationWindow.textContent = generation;
 })
@@ -250,28 +263,53 @@ function drawMove(){
     if (runMode)
       setTimeout(function() {
         move();
-        // animate();
-        redraw();
+        if (smooth)
+          animate();
+        else
+          redraw();
         generation++;
         generationWindow.textContent = generation;
-        drawMove()}, speed);
-  } else {
+        drawMove() // Recursive setTimeout keeps response to speed slider dynamic
+      }, speed);
+  } else { // that is, if (!(blob.length > 0))
     console.log('blob.length <= 0')
     //modeButton.onclick(); // not a function
     //runMode = false; // Only runs one step at a time for each double press of the run/pause button
-    // Use a trigger to cancel the recursive call?
+    // Why?  This should only run when blob.length is zero.  Console log shows that this is only accessed after blob activity ends.
   }
 }
 
 function animate(){
-  // Add outer loop running the alloted length allowed for time, which also steps distance.  Use longest time if (!runMode). Then have setTimeout call this function recursively, but
-  for (let i = 1; i < blob.length; i++){
-    ctx.globalCompositeOperation = 'xor';
-    ctx.fillText((blob[i].size).toString(), blob[i].y*scale, (blob[i].x*scale) + scale); // should already have offset as part of a loop.  Use blob[i].moveX and blob[i].moveY
-    ctx.globalCompositeOperation = 'source-over';
-    // redraw offset the next step
-  }
+  // Add outer loop running the alloted length allowed for time (one tick of speed), which also steps distance.  Use longest time if (!runMode). Then have setTimeout call this function recursively, but...?
+  let mySpeed;
+  let myScale = scale/5;
+  let i = 0;
+  if (runMode)
+    mySpeed = speed;
+  else
+    mySpeed = 1250;
+
+  setTimeout(function innerAnimate() {
+
+    for (let j = 0; j < blob.length; j++){
+      ctx.globalCompositeOperation = 'xor';
+      ctx.fillStyle = 'grey';
+      ctx.fillText((blob[j].size).toString(), (blob[j].x*scale+(i*blob[j].moveX)), ((blob[j].y*scale+(i*blob[j].moveY))) + scale);
+      //ctx.globalCompositeOperation = 'xor';
+      ctx.fillText((blob[j].size).toString(), (blob[j].x*scale+((myScale+i)*blob[j].moveX)), ((blob[j].y*scale+((myScale+i)*blob[j].moveY))) + scale);
+    }
+    ctx.globalCompositeOperation = 'source-over'
+    ctx.fillStyle = 'black';
+    //i += Math.floor(100/mySpeed);
+    i += myScale
+    if (i >= scale) {
+      clearTimeout(kill);
+    }
+    let kill = setTimeout(innerAnimate, Math.floor(mySpeed/12));
+  }, Math.floor(mySpeed/12))
+  setTimeout(redraw, mySpeed);
 }
+
 
 function drawInitial(){
   // draw initial board
@@ -360,7 +398,7 @@ generateBlobs = function() {
       blobs[j][i] = 0
       //ctx.fillText(" ", i*scale, (j*scale) + scale);
       if ((Math.floor(Math.random() * 10) < density)){ // change elements to make more or fewer blobs
-        blob.push ({x : i, // pushes first one as index 1.  Leaves index 0 as undefined
+        blob.push ({x : i, // pushes first one as index 1.  Leaves index 0 as undefined (Later creations of blob contradict this.)
                     y : j/*,
         size : 1 + Math.floor(Math.random() * 20)*/}); 
 
@@ -473,7 +511,7 @@ generateChecker = function() {
                          "moveY" : this.moveY,
                          "angle" : this.angle,
                          "size" : this.size,
-                         "zigZag" : this.zigZag}] // Give priority to targets that are not a zigzag away
+                         "zigZag" : this.zigZag}] // Give priority to targets that are not a zigzag away (Not used)
       let angleCalc = [[7, 0, 1], // Clockwise rotation straight up translation for moveY, moveX
                        [6, 0, 2], // Center position is x1's own location.  Not used; 0 is there for spacing
                        [5, 4, 3]] // Assuming angleCalc[MoveY+1][moveX+1] order
@@ -499,7 +537,7 @@ generateChecker = function() {
                       // if ((x1 === x2) || (y1 === y2))
                       //   zigZag = 1 // Orthogonical move
                      // }
-                    size = blobs[y2][x2]
+                    size = blobs[y2][x2] // The size of pursued blob.
                     if (x1 < x2)
                       moveX = 1
                     if (x1 === x2)
@@ -537,7 +575,7 @@ generateChecker = function() {
                               y : y1,
                               moveX : candidates[0].moveX,
                               moveY : candidates[0].moveY,
-                              size : candidates[0].size});
+                              size : blobs[y1][x1]});
                   //console.log({futureBlobs})
                 }
                 else {// If no candidates, the blob under x1, y1 is among the lowest value blobs, and will be stationary
@@ -573,16 +611,3 @@ generateChecker = function() {
     
   //} // Blobservation (w, h)
 //}
-
-
-// function animate(){
-//   ctx.globalCompositeOperation = xor;
-//   for (i = 1; i < length.blob; i++){
-//     ctx.fillText(blob[i].size.toString(), blob[i].x*scale, (blob[i].y*scale) + scale);
-
-//   }
-// }
-// animate it
-// check for existence of blobs of at least two sizes
-//    if yes, call Blobservation again.
-// And so on.
