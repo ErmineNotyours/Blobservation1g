@@ -5,7 +5,7 @@ let h = 40; // height
 let w = 66; // width
 let scale = 15;
 let size;
-let density;
+let density = 5;
 let generation;
 let lowestNumber;
 let allowBuild = false;
@@ -112,6 +112,8 @@ modePopup.addEventListener('change', () =>{
   popupMode = modePopup.value;
   if (popupMode === "Random"){
     densityDiv.hidden = false;
+    ctx.fillText("Random mode", 100, 100); // Never prints
+    console.log("Random mode"); // Prints;
     generate();
     redraw();
   }
@@ -153,7 +155,7 @@ document.onclick = function(mouse) {
     redraw();
   }
 
-  console.log('hotX, hotY', hotX, hotY);
+  //console.log('hotX, hotY', hotX, hotY);
 };
 
 var densityRange = document.getElementById('density');
@@ -161,7 +163,7 @@ var densityRange = document.getElementById('density');
 densityRange.addEventListener('change', () =>{
   density = densityRange.value;
   generate();
-  redraw();
+  //redraw();
 })
 
 var diagonalsCheckbox = document.querySelector('input[id="diagonals"]');
@@ -200,11 +202,11 @@ smoothAnimation.addEventListener('change', () =>{
     smooth = false;
 });
 
-var speed = 250;
+var speed = 300;
 var speedRange = document.getElementById("speed");
 
 speedRange.addEventListener('change', () =>{
-  speed = 500 - speedRange.valueAsNumber
+  speed = 600 - speedRange.valueAsNumber
 })
 
 var runMode = false;
@@ -272,22 +274,18 @@ function drawMove(){
         drawMove() // Recursive setTimeout keeps response to speed slider dynamic
       }, speed);
   } else { // that is, if (!(blob.length > 0))
-    console.log('blob.length <= 0')
-    //modeButton.onclick(); // not a function
-    //runMode = false; // Only runs one step at a time for each double press of the run/pause button
-    // Why?  This should only run when blob.length is zero.  Console log shows that this is only accessed after blob activity ends.
+    modeButton.click(); // https://stackoverflow.com/a/25806894
   }
 }
 
 function animate(){
-  // Add outer loop running the alloted length allowed for time (one tick of speed), which also steps distance.  Use longest time if (!runMode). Then have setTimeout call this function recursively, but...?
   let mySpeed;
   let myScale = scale/5;
   let i = 0;
   if (runMode)
-    mySpeed = speed;
+    mySpeed = speed - 100;
   else
-    mySpeed = 1250;
+    mySpeed = 900;
 
   setTimeout(function innerAnimate() {
 
@@ -295,18 +293,16 @@ function animate(){
       ctx.globalCompositeOperation = 'xor';
       ctx.fillStyle = 'grey';
       ctx.fillText((blob[j].size).toString(), (blob[j].x*scale+(i*blob[j].moveX)), ((blob[j].y*scale+(i*blob[j].moveY))) + scale);
-      //ctx.globalCompositeOperation = 'xor';
       ctx.fillText((blob[j].size).toString(), (blob[j].x*scale+((myScale+i)*blob[j].moveX)), ((blob[j].y*scale+((myScale+i)*blob[j].moveY))) + scale);
     }
     ctx.globalCompositeOperation = 'source-over'
     ctx.fillStyle = 'black';
-    //i += Math.floor(100/mySpeed);
     i += myScale
     if (i >= scale) {
-      clearTimeout(kill);
+      clearTimeout(kill); //ReferenceError: Cannot access 'kill' before initialization at innerAnimate (Blobservation1g.js:308) [Seems to work fine]
     }
-    let kill = setTimeout(innerAnimate, Math.floor(mySpeed/12));
-  }, Math.floor(mySpeed/12))
+    let kill = setTimeout(innerAnimate, Math.floor(mySpeed/8));
+  }, Math.floor(mySpeed/8))
   setTimeout(redraw, mySpeed);
 }
 
@@ -360,12 +356,12 @@ generate = function (){
       generateChecker();
       break
 
-    case 'Random':
-      generateBlobs();
-      break
-
     case 'Build':
       erase();
+      break
+
+    case 'Random':
+      generateBlobs();
       break
 
   }
@@ -385,36 +381,30 @@ function erase(){
   }
 }
 
-generateBlobs = function() {
+function generateBlobs () {
   //Random block placement code from Mazebreaker
-  console.log('generateBlobs')
+  //console.log('generateBlobs (random)')
   generation = 0;
   generationWindow.textContent = generation;
-  drawInitial();
+  //drawInitial();
   var count = 1; 
   for (var i = 0; i < w; i++){ // w == 66
+    console.log("Random", {i, j}) // Loops completely, even when random board doesn't display
     for (var j = 0; j < h; j++){ // h == 40
       //console.log({i, j, count})
       blobs[j][i] = 0
-      //ctx.fillText(" ", i*scale, (j*scale) + scale);
       if ((Math.floor(Math.random() * 10) < density)){ // change elements to make more or fewer blobs
-        blob.push ({x : i, // pushes first one as index 1.  Leaves index 0 as undefined (Later creations of blob contradict this.)
-                    y : j/*,
-        size : 1 + Math.floor(Math.random() * 20)*/}); 
+        blob.push ({x : i, // Seems to push first one as index 1.  Leaves index 0 as undefined
+          y : j}); // First generation mostly unused.  Required for rerunning to clear blob.length <= 0
 
         blobs[j][i] = 1 + Math.floor(Math.random() * 20);
-        //blob[count].size = blobs[j][i]; // Uncaught TypeError: Cannot read property 'size' of undefined at generateBlobs
-        // To reproduce these errors: uncomment the line above.  Run the program at the fastest speed.  Press the pause button to go to pause mode.  Select random.  "Cannot read property 'size' of undefined" error.  However, change the scale, and the routine works fine again.
-        // The above line is only necessary for an animation routine that has not been implemented.
-        // May be related to the error of random not working unless density is changed.
-        //blobs[j][i] = blob[count].size; // Put on array. //Also generates Uncaught TypeError: Cannot read property 'size' of undefined at generateBlobs (Blobservation1g.js:219)
-        ctx.fillText(blobs[j][i].toString(), i*scale, (j*scale) + scale);
-        //console.log({i, j}, blobs[j][i])
+        //ctx.fillText(blobs[j][i].toString(), i*scale, (j*scale) + scale);
+        console.log({i, j}, blobs[j][i]); // Does not display when Random is first chosen, but it does after density is changed
         count++;
       } // end if
     } // next j
   } // next i
-  redraw();
+  //redraw();
   //console.log('Generation 0',{blobs})
 }
 
@@ -426,10 +416,6 @@ generateChecker = function() {
   var count = 1; 
   for (var i = 0; i < w; i++){
     for (var j = 0; j < h; j++){
-      blob.push ({x : i, // pushes first one as index 1.  Leaves index 0 as undefined
-                  y : j/*,
-      size : 1 + Math.floor(Math.floor(1+(i+j)/2)-((i+j)/2))*/});
-      
       if (patternValue === "checker")
         size = 1 + Math.floor(Math.floor(1+(i+j)/2)-((i+j)/2));
       else if (patternValue === "vertical")
@@ -439,10 +425,10 @@ generateChecker = function() {
       else if (patternValue === "center")
         size = 2;
 
+        blob.push ({x : i, // pushes first one as index 1.  Leaves index 0 as undefined
+          y : j}); // Required for rerunning to clear blob.length <= 0
+
       blobs[j][i] = size;
-      //console.log(patternDiv.value, {size})
-      //blob[count].size = size; // "Cannot read property 'size' of undefined" error happens sometimes, but not always.  See above
-      //blobs[j][i] = blob[count].size; // Put on array.
       ctx.fillText(blobs[j][i].toString(), i*scale, (j*scale) + scale);
       //console.log({i, j, count}, blobs[j][i])
       count++;

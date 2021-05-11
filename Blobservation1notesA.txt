@@ -1,0 +1,280 @@
+{ blobs:  1  2  3  4  5  6  7   
+   [ [ 0, 0, 2, 0, 0, 0, 0, 3 ], 0
+     [ 0, 0, 0, 0, 0, 0, 0, 0 ], 1
+     [ 0, 0, 0, 0, 0, 0, 0, 1 ], 2
+     [ 0, 0, 0, 0, 4, 0, 0, 0 ], 3
+     [ 3, 0, 0, 0, 0, 0, 0, 0 ], 4
+     [ 0, 0, 0, 0, 0, 0, 0, 0 ], 5
+     [ 0, 0, 0, 0, 0, 2, 0, 0 ], 6
+     [ 5, 0, 0, 2, 0, 0, 1, 0 ] ] }7
+
+
+   [ [ 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 2, 0, 0, 0, 3 ],
+     [ 0, 0, 0, 0, 0,*0, 0, 1 ],  <-- Expected
+     [ 0, 0, 0, 0, 0, 0, 0, 0 ], 3
+     [ 0, 0, 0, 0, 0, 4, 0, 0 ],  <-- Wrong, per example.
+     [ 0, 3, 0, 0, 0, 0, 0, 0 ],
+     [ 5, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 2, 0, 3, 0 ] ] }			      v
+Expected:    [[0, 6, 5], [1, 5, 3], [3, 1, 2], [4, 7, 2], [5, 2, 4], [6, 7, 3], [7, 1, 3], [7, 2, 1]],
+instead got: [[0, 6, 5], [1, 5, 3], [3, 1, 2], [4, 7, 2], [5, 4, 4], [6, 7, 3], [7, 1, 3], [7, 2, 1]]
+
+The 4 should move towards the 2, not the 1.
+
+class Blobservation {
+  
+  constructor(w, h){ // constructor consumes whole code, just inside the closing bracket for the class Blobservation.  If brackets move, other variables are out of scope
+    this.w = w
+    this.h = h
+
+    if (h === undefined)
+      h = w
+    console.log({h, w})
+... The closing bracket for the constructor is right before the closing bracket for class Blobservation, near the end of the program.  Most of the code is inside the constructor, but moving the bracket elsewhere puts w and h out of scope.  Necessary because of this test:
+
+describe("Example Tests", _ => {
+	const pf = (x,r) => Test.assertDeepEquals(x.print_state(),r);
+
+However, on actual attempt:
+
+Missing required method properties or properties are not valid functions
+
+I suspect the misuse of the constructor is to blame.
+
+A Blobservation class instance is *instantiated* with two integer values, h and w, that represent the dimensions of the room. The instance methods are as follows: ...
+
+What exactly is instatiation, and how else can I get this to work?
+Or maybe attempt won't work without passing the basic tests first.
+
+Take out the size sort, and 5 test pass!  Until this one:
+
+  blobs: 
+   [ [ 0, 0, 0, 0, 0, 0, 0, 0, 2, 0 ],
+     [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 5, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 6, 0, 0, 4, 0 ], <-- 4 could move down, right to move to larger 3
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 4, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 1, 0, 2, 3, 0, 3, 0, 0, 0, 3 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 ] ] }
+Final { blobs: 
+   [ [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 1, 5, 0, 0, 0, 0, 2, 0, 0 ],
+     [ 0, 0, 0, 0, 6, 0, 0, 0, 4, 0 ], <-- without size sort, 4 moves up toward the 2
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0,*0, 0, 0 ], <-- test result says 4 should move here.  Why?
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 9, 4 would have moved it closer to a 3 on an earlier rotation.
+     [ 1, 2, 7, 0, 0, 0, 0, 0, 0, 0 ], 
+     [ 0, 0, 0, 0, 0, 0, 3, 1, 3, 0 ] ] }
+Expected:    [[0, 6, 1], [1, 1, 1], [1, 6, 2], [2, 1, 5], [2, 6, 7], [4, 2, 6], [6, 7, 3], [7, 1, 2], [7, 4, 4], [7, 7, 1], [8, 7, 3]],
+instead got: [[0, 6, 1], [1, 1, 1], [1, 6, 2], [2, 1, 5], [2, 6, 7], [4, 2, 6], [6, 7, 3], [7, 1, 2], [7, 7, 1], [8, 2, 4], [8, 7, 3]]
+
+Per example:
+At T:0, the orange blob at [4,3] with a size of 4 has four different targets of equal movement distance — the blobs occupying the green, yellow, and red spaces.
+There are only three possible moves to account for four blobs.  The lower left move is equally close to two blobs.  It would place it 2 up from a 1, but 2 diagonal from a 3.  Need to account for diagonals; need a better formula.  A formula in the comments is max(abs dist x, abs dist y).  Perhaps a simpler formula counting x, y differences.
+
+refactored whole numbers. Size sort still turned off  Test 4
+  blobs:  1  2  3  4  5  6  7  8  9
+0  [ [ 0, 0, 0, 0, 0, 0, 0, 0, 2, 0 ],
+1    [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 ],
+2    [ 0, 0, 0, 5, 0, 0, 0, 0, 0, 0 ],
+3    [ 0, 0, 0, 0, 0, 6, 0, 0, 4, 0 ], <-- 4 will be 5th tested blob of test 4. (8, 3)
+4    [ 0, 0, 0, 0, 0, 0, 0,*0, 0, 0 ], <-- 4 expected here.  Maybe the test expects straigt diagonals over diagonal then straight?
+5    [ 0, 4, 0, 0, 0, 0, 0, 0, 0, 0 ],
+6    [ 1, 0, 2, 3, 0, 3, 0, 0, 0, 3 ],
+7    [ 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 ] ] }
+												       v  v
+Expected:    [[0, 6, 1], [1, 1, 1], [1, 6, 2], [2, 1, 5], [2, 6, 7], [4, 2, 6], [6, 7, 3], [7, 1, 2], [7, 4, 4], [7, 7, 1], [8, 7, 3]],
+instead got: [[0, 6, 1], [1, 1, 1], [1, 6, 2], [2, 1, 5], [2, 6, 7], [4, 2, 6], [6, 7, 3], [7, 1, 2], [7, 7, 1], [8, 2, 4], [8, 7, 3]]
+														  ^  ^ (earlier test)
+  candidates: 
+   [ { distance: 3, y2: 0, x2: 8, moveX: 0, moveY: -1, angle: 0, size: 2 }, <-- This one picked in earlier test
+     { distance: 7, y2: 1, x2: 1, moveX: -1, moveY: -1, angle: 7, size: 1 },
+     { distance: 8, y2: 6, x2: 0, moveX: -1, moveY: 1, angle: 5, size: 1 },
+     { distance: 6, y2: 6, x2: 2, moveX: -1, moveY: 1, angle: 5, size: 2 },
+     { distance: 5, y2: 6, x2: 3, moveX: -1, moveY: 1, angle: 5, size: 3 },
+     { distance: 3, y2: 6, x2: 5, moveX: -1, moveY: 1, angle: 5, size: 3 }, <-- test wanted this one
+     { distance: 3, y2: 6, x2: 9, moveX: 1, moveY: 1, angle: 3, size: 3 }, <-- I expected this one
+     { distance: 4, y2: 7, x2: 7, moveX: -1, moveY: 1, angle: 5, size: 1 } ] }
+
+After sort { candidates: 				     v angle sort in action!
+   [ { distance: 3, y2: 6, x2: 9, moveX: 1, moveY: 1, angle: 3, size: 3 }, <-- I expected this one, and it's on top
+     { distance: 3, y2: 6, x2: 5, moveX: -1, moveY: 1, angle: 5, size: 3 },<-- Test wanted this one
+     { distance: 3, y2: 0, x2: 8, moveX: 0, moveY: -1, angle: 0, size: 2 },
+     { distance: 4, y2: 7, x2: 7, moveX: -1, moveY: 1, angle: 5, size: 1 },
+     { distance: 5, y2: 6, x2: 3, moveX: -1, moveY: 1, angle: 5, size: 3 },
+     { distance: 6, y2: 6, x2: 2, moveX: -1, moveY: 1, angle: 5, size: 2 },
+     { distance: 7, y2: 1, x2: 1, moveX: -1, moveY: -1, angle: 7, size: 1 },
+     { distance: 8, y2: 6, x2: 0, moveX: -1, moveY: 1, angle: 5, size: 1 } ] }
+
+Final { blobs: 
+   [ [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 1, 5, 0, 0, 0, 0, 2, 0, 0 ],
+     [ 0, 0, 0, 0, 6, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 4 ], <-- 4 is where I expect it
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 1, 2, 7, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 3, 1, 3, 0 ] ] }
+Expected:    [[0, 6, 1], [1, 1, 1], [1, 6, 2], [2, 1, 5], [2, 6, 7], [4, 2, 6], [6, 7, 3], [7, 1, 2], [7, 4, 4], [7, 7, 1], [8, 7, 3]]
+instead got: [[0, 6, 1], [1, 1, 1], [1, 6, 2], [2, 1, 5], [2, 6, 7], [4, 2, 6], [6, 7, 3], [7, 1, 2], [7, 7, 1], [8, 7, 3], [9, 4, 4]] < Now 4 is at 9,4
+
+{ moves: 2,
+  blobs: 
+   [ [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 1, 5, 0, 0, 0, 0, 2, 0, 0 ],
+     [ 0, 0, 0, 0, 6, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 4, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 1, 2, 7, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 3, 1, 3, 0 ] ] }
+{ futureBlobs: (end of move 1)
+   [ [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 6, 0, 6, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 2, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 4, 0 ],
+     [ 3, 7, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 7, 0, 0 ] ] }
+Final { blobs:  4  5  6  7  8  9  10 
+0  [ [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], 
+1    [ 0, 0, 0, 0,*0, 0, 0, 0, 0, 0 ], <-- 6 should be 4, 1 (move toward the 2)
+2    [ 6, 0,*0, 0, 6, 0, 0, 2, 0, 0 ], <-- 6 shown at 0, 2; should be 2, 2
+3    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+4    [ 0, 0, 0, 0, 0, 0, 0, 4, 0, 0 ],
+5    [ 0, 3, 0, 0, 0, 0, 0, 0, 0, 0 ],
+6    [ 7, 0, 0, 0, 0, 0, 0, 0,*7, 0 ], <-- 7 shown at 9, 6; result shows 8, 6 (should be 6, 6)
+7    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ] ] }
+Way off!			     v		   v	   v  v	      v		 v
+Expected:    [[0, 6, 7], [1, 5, 3], [2, 2, 6], [4, 1, 6], [6, 1, 2], [6, 4, 4], [6, 6, 7]],
+instead got: [[0, 2, 6], [0, 6, 7], [1, 5, 3], [4, 2, 6], [7, 2, 2], [7, 4, 4], [8, 6, 7]]
+	       ^  
+{ moves: 2,
+  blobs: 
+   [ [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 1, 5, 0, 0, 0, 0, 2, 0, 0 ],
+     [ 0, 0, 0, 0, 6, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 4, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 1, 2, 7, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 3, 1, 3, 0 ] ] }
+After sort { candidates: 
+   [ { distance: 1, x2: 1, y2: 1, moveX: -1, moveY: 0, angle: 6, size: 1 },
+     { distance: 5, x2: 7, y2: 4, moveX: 1, moveY: 1, angle: 3, size: 4 },
+     { distance: 5, x2: 7, y2: 1, moveX: 1, moveY: 0, angle: 2, size: 2 },
+     { distance: 5, x2: 1, y2: 6, moveX: -1, moveY: 1, angle: 5, size: 2 },
+     { distance: 5, x2: 0, y2: 6, moveX: -1, moveY: 1, angle: 5, size: 1 },
+     { distance: 5.5, x2: 8, y2: 7, moveX: 1, moveY: 1, angle: 3, size: 3 },
+     { distance: 6, x2: 6, y2: 7, moveX: 1, moveY: 1, angle: 3, size: 3 },
+     { distance: 6, x2: 7, y2: 7, moveX: 1, moveY: 1, angle: 3, size: 1 } ] }
+{ futureBlobs: 
+   [ [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 6, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ] ] }
+(moves 2)
+{ futureBlobs: (end of move 1)
+   [ [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 6, 0, 6, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 2, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 4, 0 ],
+     [ 3, 7, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 7, 0, 0 ] ] }
+After sort { candidates: 
+   [ { distance: 5, x2: 0, y2: 6, moveX: -1, moveY: 1, angle: 5, size: 3 },
+     { distance: 6, x2: 7, y2: 2, moveX: 1, moveY: 1, angle: 3, size: 2 },
+     { distance: 7, x2: 8, y2: 5, moveX: 1, moveY: 1, angle: 3, size: 4 } ] }
+{ futureBlobs: 
+   [ [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 6, 0,*0, 0, 0, 0, 0, 0, 0, 0 ], <-- test expects 6 to move down and to the right (2, 2, 6) to move toward the 2? The 3 is closer.
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ] ] }
+
+************************************************************************
+May 2
+
+The only additional test that passes with distances moved .5 closer if they are on a diagonal plane:
+(This rule makes no difference for earlier tests, and doesn't help later)
+{ moves: 1,
+  blobs: 
+   [ [ 0, 0, 0, 0, 0, 0, 0, 0, 2, 0 ],
+     [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 5, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 6, 0, 0, 4, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 4, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 1, 0, 2, 3, 0, 3, 0, 0, 0, 3 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 ] ] }
+Final { blobs: 
+   [ [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 1, 5, 0, 0, 0, 0, 2, 0, 0 ],
+     [ 0, 0, 0, 0, 6, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 4, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 1, 2, 7, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 3, 1, 3, 0 ] ] } 
+Test Passed: Value deep equals [[0, 6, 1], [1, 1, 1], [1, 6, 2], [2, 1, 5], [2, 6, 7], [4, 2, 6], [6, 7, 3], [7, 1, 2], [7, 4, 4], [7, 7, 1], [8, 7, 3]]
+
+The same test without favoring diagonals:
+{ moves: 1,
+  blobs: 
+0  [ [ 0, 0, 0, 0, 0, 0, 0, 0, 2, 0 ],
+1    [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 ],
+2    [ 0, 0, 0, 5, 0, 0, 0, 0, 0, 0 ],
+3    [ 0, 0, 0, 0, 0, 6, 0, 0,*4, 0 ], <-- 4 starts here
+4    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+5    [ 0, 4, 0, 0, 0, 0, 0, 0, 0, 0 ],
+6    [ 1, 0, 2, 3, 0,*3, 0, 0, 0,*3 ], <-- Targeting either of these two 3s, both a distance of 3 away.
+7    [ 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 ] ] } (The left and down move is favored by the rules because it's a straight diagonal away.)
+Final { blobs:  3  4  5  6  7  8  9
+0  [ [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+1    [ 0, 1, 5, 0, 0, 0, 0, 2, 0, 0 ],
+2    [ 0, 0, 0, 0, 6, 0, 0, 0, 0, 0 ],
+3    [ 0, 0, 0, 0, 0, 0, 0, 0,*0, 0 ], <-- start
+4    [ 0, 0, 0, 0, 0, 0, 0,*0, 0,*4 ], <-- difference moves along this line.
+5    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], (both moves are diagonal.  huh?)
+6    [ 1, 2, 7, 0, 0, 0, 0, 0, 0, 0 ],
+7    [ 0, 0, 0, 0, 0, 0, 3, 1, 3, 0 ] ] }							       v	to match end v
+Expected:    [[0, 6, 1], [1, 1, 1], [1, 6, 2], [2, 1, 5], [2, 6, 7], [4, 2, 6], [6, 7, 3], [7, 1, 2], [7, 4, 4], [7, 7, 1], [8, 7, 3]],
+instead got: [[0, 6, 1], [1, 1, 1], [1, 6, 2], [2, 1, 5], [2, 6, 7], [4, 2, 6], [6, 7, 3], [7, 1, 2], [7, 7, 1], [8, 7, 3], [9, 4, 4]]
+
+
+After complicated zigZag test sort added:
+{ moves: 1,
+  blobs: 
+   [ [ 0, 0, 0, 0, 0, 0, 0, 0, 2, 0 ],
+     [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 5, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 6, 0, 0, 4, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 4, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 1, 0, 2, 3, 0, 3, 0, 0, 0, 3 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 ] ] }
+Final { blobs: 
+   [ [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 1, 5, 0, 0, 0, 0, 2, 0, 0 ],
+     [ 0, 0, 0, 0, 6, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 4 ],
+     [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 1, 2, 7, 0, 0, 0, 0, 0, 0, 0 ],
+     [ 0, 0, 0, 0, 0, 0, 3, 1, 3, 0 ] ] }  Same as above.  (Above is standard sort with diagonal priority turned off.)
+Expected:    [[0, 6, 1], [1, 1, 1], [1, 6, 2], [2, 1, 5], [2, 6, 7], [4, 2, 6], [6, 7, 3], [7, 1, 2], [7, 4, 4], [7, 7, 1], [8, 7, 3]],
+instead got: [[0, 6, 1], [1, 1, 1], [1, 6, 2], [2, 1, 5], [2, 6, 7], [4, 2, 6], [6, 7, 3], [7, 1, 2], [7, 7, 1], [8, 7, 3], [9, 4, 4]]
+
+But, place the zigzag sort at the end, and it passes the unit tests!
